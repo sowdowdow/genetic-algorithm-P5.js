@@ -1,6 +1,8 @@
 var frameRate = 60;
 var ballSize = 50;
-var bestScore = 999999;
+var bestScore = Infinity;
+var moveDuration = 6;
+var maxSpeed = 6;
 var window_width = window.innerWidth - 25;
 var window_height = window.innerHeight - 25;
 var StartPoint = { "x": window_width / 2, "y": window_height - ballSize };
@@ -23,6 +25,7 @@ var bestVectors = {
 class Ball {
     constructor(_bestVectors = null) {
         this.size = ballSize;
+        this.radius = ballSize / 2;
         this.x = StartPoint.x;
         this.y = StartPoint.y + (ballSize / 2);
         this.vectorsX = [];
@@ -37,39 +40,68 @@ class Ball {
     }
 
     Draw(frame) {
-        fill(255);
-        this.UpdateVectorsAndPosition(frame);
+        // if (frame % moveDuration == 0) {
+        //     alert("gre")
+        // }
+        this.UpdateVectors(frame);
+        this.UpdatePositions(frame);
         this.UpdateScore();
+        fill(255);
         ellipse(this.x, this.y, this.size, this.size);
     }
+    UpdatePositions(frame) {
+        //borders limits
+        if (this.y + this.radius >= window_height) {
+            this.y = window_height - this.radius;
+        }
+        if (this.x + this.radius >= window_width) {
+            this.x = window_width - this.radius;
+        }
 
-    UpdateVectorsAndPosition(frame) {
+        //movements
+        this.x += parseFloat(this.vectorsX[frame]);
+        this.y += parseFloat(this.vectorsY[frame]);
+    }
+    UpdateVectors(frame) {
         // randomize new vectors
+        // first generation case
         if (this.vectorsX[frame] == null || this.vectorsY[frame] == null) {
-            //first generation case
-            console.log("first gen");
-            this.vectorsX[frame] = parseFloat(random(6) - 3);
-            this.vectorsY[frame] = parseFloat(random(6) - 3);
+            // if a previous vector exists
+            if (this.vectorsX[frame - 1] && this.vectorsY[frame - 1]) {
+                this.vectorsX[frame] = this.vectorsX[frame - 1] * random(-1, 1);
+                this.vectorsY[frame] = this.vectorsY[frame - 1] * random(-1, 1);
+            } else {
+                //the really first vector
+                this.vectorsX[frame] = random(-5, 5);
+                this.vectorsY[frame] = random(-5, 5);
+            }
         } else {
-            console.log("gen" + generationNumber);
-            this.vectorsX[frame] = this.vectorsX[frame] + parseFloat(random(2) - 1);;
-            this.vectorsY[frame] = this.vectorsY[frame] + parseFloat(random(2) - 1);;
-        }
 
-        if (this.x + this.vectorsX[frame] + this.size >= window_height) {
-            this.x -= parseFloat(this.vectorsX[frame]);
-        } else {
-            this.x += parseFloat(this.vectorsX[frame]);
+            //~=~=~=~=~=~=~=~=~=~=~=~=
+            // CONTROL OF SPEED
+            //~=~=~=~=~=~=~=~=~=~=~=~=
+            if (this.vectorsX[frame] > 6 || this.vectorsX[frame] < -6) {
+                if (this.vectorsX[frame] > 6) {
+                    this.vectorsX[frame] = 6;
+                }
+                if (this.vectorsX[frame] < -6) {
+                    this.vectorsX[frame] = -6;
+                }
+            } else {
+                //randomizing speed
+                this.vectorsX[frame] = parseFloat(this.vectorsX[frame] + random(-3, 3));
+            }
+            if (this.vectorsY[frame] > 6 || this.vectorsY[frame] < -6) {
+                if (this.vectorsY[frame] > 6) {
+                    this.vectorsY[frame] = 6;
+                }
+                if (this.vectorsY[frame] < -6) {
+                    this.vectorsY[frame] = -6;
+                }
+            } else {
+                this.vectorsY[frame] = parseFloat(this.vectorsY[frame] + random(-3, 3));
+            }
         }
-
-        if (this.y + this.vectorsY[frame] + this.size >= window_height) {
-            this.y -= parseFloat(this.vectorsY[frame]);
-        } else {
-            this.y += parseFloat(this.vectorsY[frame]);
-        }
-
-        //console.log("x: " + this.vectorsX);
-        //console.log("y: " + this.vectorsY);
     }
 
     UpdateScore() {
@@ -106,7 +138,7 @@ function draw() {
     //if it's a new generation, we recreate a ball
 
     if (timeSinceStart == 0) {
-        for (ball = 0; ball < 50; ball++) {
+        for (ball = 0; ball < 1000; ball++) {
             balls[ball] = new Ball(bestVectors);
         }
 
